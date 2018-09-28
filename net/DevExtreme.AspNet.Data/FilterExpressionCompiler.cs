@@ -14,7 +14,9 @@ namespace DevExtreme.AspNet.Data {
             CONTAINS = "contains",
             NOT_CONTAINS = "notcontains",
             STARTS_WITH = "startswith",
-            ENDS_WITH = "endswith";
+            ENDS_WITH = "endswith",
+            EQUALS = "equals",
+            NOT_EQUALS = "notequals";
 
         public FilterExpressionCompiler(bool guardNulls)
             : base(guardNulls) {
@@ -41,8 +43,16 @@ namespace DevExtreme.AspNet.Data {
 
             var clientAccessor = Convert.ToString(criteriaJson[0]);
             var clientOperation = hasExplicitOperation ? Convert.ToString(criteriaJson[1]).ToLower() : "=";
+
+            if(hasExplicitOperation  && typeof(T).GetProperty(clientAccessor)?.PropertyType == typeof(String)) {
+                if(clientOperation == "=")
+                    clientOperation = EQUALS;
+                else if(clientOperation == "<>")
+                    clientOperation = NOT_EQUALS;
+            }
+
             var clientValue = criteriaJson[hasExplicitOperation ? 2 : 1];
-            var isStringOperation = clientOperation == CONTAINS || clientOperation == NOT_CONTAINS || clientOperation == STARTS_WITH || clientOperation == ENDS_WITH;
+            var isStringOperation = clientOperation == CONTAINS || clientOperation == NOT_CONTAINS || clientOperation == STARTS_WITH || clientOperation == ENDS_WITH || clientOperation == EQUALS || clientOperation == NOT_EQUALS;
 
             var accessorExpr = CompileAccessorExpression(dataItemExpr, clientAccessor, progression => {
                 if(isStringOperation)
@@ -110,6 +120,9 @@ namespace DevExtreme.AspNet.Data {
 
             if(clientOperation == NOT_CONTAINS) {
                 clientOperation = CONTAINS;
+                invert = true;
+            } else if(clientOperation == NOT_EQUALS) {
+                clientOperation = EQUALS;
                 invert = true;
             }
 
@@ -206,6 +219,9 @@ namespace DevExtreme.AspNet.Data {
 
             if(clientOperation == ENDS_WITH)
                 return nameof(String.EndsWith);
+
+            if(clientOperation == EQUALS)
+                return nameof(String.Equals);
 
             return nameof(String.Contains);
         }
