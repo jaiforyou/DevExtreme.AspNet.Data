@@ -73,6 +73,18 @@ namespace DevExtreme.AspNet.Data.Tests {
         }
 
         [Fact]
+        public void StringsCaseInsensitiveExplicitEquals() {
+            var expr = Compile<DataItem1>(new object[] { "StringProp", "=", "aBcD" });
+            Assert.Equal("obj.StringProp.ToLower().Equals(\"abcd\")", expr.Body.ToString());
+        }
+
+        [Fact]
+        public void StringsCaseInsensitiveExplicitDoesNotEquals() {
+            var expr = Compile<DataItem1>(new object[] { "StringProp", "<>", "aBcD" });
+            Assert.Equal("Not(obj.StringProp.ToLower().Equals(\"abcd\"))", expr.Body.ToString());
+        }
+
+        [Fact]
         public void StringFunctionOnNonStringData() {
             var expr = Compile<DataItem1>(new[] { "IntProp", "contains", "Abc" });
             Assert.Equal("obj.IntProp.ToString().ToLower().Contains(\"abc\")", expr.Body.ToString());
@@ -155,12 +167,12 @@ namespace DevExtreme.AspNet.Data.Tests {
                 new object[] { "IntProp", ">", 1 },
                 new object[] { "IntProp", "<", 10 },
                 "and",
-                new[] { "StringProp", "<>", "abc" }
+                new[] { "StringProp", "<>", "aBC" }
 
             };
 
             var expr = Compile<DataItem1>(crit);
-            Assert.Equal("(((obj.IntProp > 1) AndAlso (obj.IntProp < 10)) AndAlso (obj.StringProp != \"abc\"))", expr.Body.ToString());
+            Assert.Equal("(((obj.IntProp > 1) AndAlso (obj.IntProp < 10)) AndAlso Not(obj.StringProp.ToLower().Equals(\"abc\")))", expr.Body.ToString());
         }
 
         [Fact]
